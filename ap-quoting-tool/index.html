@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BILL AP Quoting Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f1f0ec; color: #1a1a1a; padding: 32px 20px; min-height: 100vh; }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  .tool-header { margin-bottom: 28px; }
+  .tool-header h1 { font-size: 24px; font-weight: 800; color: #0C064F; }
+  .tool-header p { font-size: 14px; color: #666; margin-top: 6px; }
+
+  .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  .panel { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .panel h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #999; margin-bottom: 18px; }
+
+  .input-group { margin-bottom: 18px; }
+  .input-group:last-child { margin-bottom: 0; }
+  .input-group label { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #1a1a1a; }
+
+  .rate-badge { display: inline-block; padding: 3px 9px; background: #FFF3ED; color: #FF5A0A; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  input[type="range"] { flex: 1; -webkit-appearance: none; appearance: none; height: 5px; border-radius: 3px; background: #e8e8e8; outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #FF5A0A; cursor: pointer; box-shadow: 0 1px 5px rgba(255,90,10,0.4); }
+  input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #FF5A0A; cursor: pointer; border: none; }
+
+  .num-input { width: 76px; padding: 7px 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 700; text-align: right; background: white; color: #1a1a1a; outline: none; transition: border-color 0.15s; }
+  .num-input:focus { border-color: #FF5A0A; }
+
+  /* ——— Custom Pricing Panel ——— */
+  .custom-pricing-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .custom-pricing-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1.5px solid #ddd;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    position: relative;
+  }
+  .custom-pricing-toggle:hover { border-color: #aaa; color: #555; }
+  .custom-pricing-toggle.has-overrides { border-color: #FF5A0A; color: #FF5A0A; }
+
+  .override-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #FF5A0A;
+    display: none;
+    flex-shrink: 0;
+  }
+  .custom-pricing-toggle.has-overrides .override-dot { display: inline-block; }
+
+  .custom-pricing-panel {
+    background: white;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 16px;
+    display: none;
+    border: 1.5px solid #f0f0f0;
+  }
+  .custom-pricing-panel.open { display: block; }
+
+  .custom-pricing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .custom-pricing-header h3 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #999;
+  }
+  .cp-reset {
+    font-size: 12px;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .cp-reset:hover { color: #FF5A0A; }
+
+  .cp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+  }
+  .cp-col { display: flex; flex-direction: column; gap: 14px; }
+  .cp-col-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cp-col-header {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #aaa;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid #f0f0f0;
+    margin-bottom: 2px;
+  }
+  .cp-col-header.std { color: #FF5A0A; }
+  .cp-col-header.lite { color: #0C064F; }
+
+  .cp-field { }
+  .cp-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .cp-field label span {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: #aaa;
+    margin-top: 1px;
+  }
+  .cp-input-row { display: flex; align-items: center; gap: 6px; }
+  .cp-dollar { font-size: 14px; font-weight: 700; color: #aaa; }
+  .cp-input {
+    width: 80px;
+    padding: 7px 10px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.15s;
+    background: white;
+  }
+  .cp-input:focus { border-color: #FF5A0A; }
+  .cp-input.overridden { border-color: #FF5A0A; background: #FFF8F5; }
+  .cp-mo { font-size: 12px; color: #aaa; }
+
+  /* Comparison section */
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  .plan-card { border-radius: 14px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .plan-card.standard { background: #FF5A0A; color: white; }
+  .plan-card.lite { background: #0C064F; color: white; }
+  .plan-card.winner { box-shadow: 0 4px 20px rgba(0,0,0,0.22); }
+
+  .plan-label { font-size: 12px; font-weight: 700; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+  .plan-name { font-size: 18px; font-weight: 900; margin-bottom: 16px; }
+  .plan-total { font-size: 44px; font-weight: 900; line-height: 1; }
+  .plan-sub { font-size: 12px; opacity: 0.65; margin-top: 4px; margin-bottom: 16px; }
+
+  .plan-lines { border-top: 1px solid rgba(255,255,255,0.2); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .plan-line { display: flex; justify-content: space-between; font-size: 13px; }
+  .plan-line .line-label { opacity: 0.8; }
+  .plan-line .line-amount { font-weight: 700; }
+
+  .plan-line-header { display: flex; align-items: center; font-size: 13px; }
+  .plan-line-header .line-label { opacity: 0.8; font-weight: 600; }
+
+  .plan-line-tier { display: flex; justify-content: space-between; font-size: 11px; padding-left: 14px; margin-top: 2px; opacity: 0.75; }
+  .plan-line-tier .tier-desc { }
+  .plan-line-tier .tier-amount { font-weight: 600; }
+
+  .savings-banner { background: white; border-radius: 14px; padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+  .savings-banner.standard-wins { border-left: 5px solid #FF5A0A; }
+  .savings-banner.lite-wins { border-left: 5px solid #0C064F; }
+  .savings-banner.tied { border-left: 5px solid #aaa; }
+  .savings-label { font-size: 13px; color: #666; }
+  .savings-amount { font-size: 22px; font-weight: 900; color: #1a1a1a; }
+
+  .compare-section { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .compare-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .compare-header h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #999; }
+  .add-scenario { padding: 8px 16px; background: #FF5A0A; color: white; border: none; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .add-scenario:hover { background: #e04d00; }
+
+  .scenarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .no-scenarios { color: #bbb; font-size: 13px; padding: 4px 0; }
+
+  .scenario-card { background: #f7f7f7; border-radius: 10px; padding: 14px; position: relative; }
+  .sc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 6px; }
+  .sc-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .sc-plan-label { font-size: 11px; color: #888; }
+  .sc-plan-amount { font-size: 14px; font-weight: 800; color: #1a1a1a; }
+  .sc-winner-badge { display: inline-block; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; margin-top: 8px; }
+  .badge-standard { background: #FFF3ED; color: #FF5A0A; }
+  .badge-lite { background: #ECEBFA; color: #0C064F; }
+  .badge-tied { background: #eee; color: #888; }
+  .sc-detail { font-size: 11px; color: #999; margin-top: 6px; line-height: 1.6; }
+  .sc-breakdown { margin-top: 8px; border-top: 1px solid #e8e8e8; padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .sc-breakdown-row { display: flex; justify-content: space-between; font-size: 11px; color: #888; }
+  .sc-breakdown-row .sc-bl { }
+  .sc-breakdown-row .sc-ba { font-weight: 700; color: #1a1a1a; }
+  .sc-remove { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer; color: #ccc; line-height: 1; padding: 0; }
+  .sc-remove:hover { color: #888; }
+
+  @media (max-width: 580px) {
+    .inputs-grid, .comparison, .cp-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="tool-header">
+    <h1>BILL AP Quoting Tool</h1>
+    <p>Compare Standard vs LITE pricing based on your client's usage</p>
+  </div>
+
+  <div class="inputs-grid">
+    <div class="panel">
+      <h3>Client Setup</h3>
+      <div class="input-group">
+        <label>Number of Entities across Consoles <span class="rate-badge" id="entity-rate-badge">$35 / entity</span></label>
+        <div class="slider-row">
+          <input type="range" id="entities-slider" min="1" max="500" value="5">
+          <input type="number" class="num-input" id="entities-input" min="1" value="5">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Client Users <span class="rate-badge">1st free, +$10 ea</span></label>
+        <div class="slider-row">
+          <input type="range" id="users-slider" min="1" max="50" value="1">
+          <input type="number" class="num-input" id="users-input" min="1" value="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Monthly Payments</h3>
+      <div class="input-group">
+        <label>ACH Payments <span class="rate-badge" id="ach-rate-badge">$0.59 (Std) / $2.19 (Lite)</span></label>
+        <div class="slider-row">
+          <input type="range" id="ach-slider" min="0" max="500" value="0">
+          <input type="number" class="num-input" id="ach-input" min="0" value="0">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Check Payments <span class="rate-badge" id="check-rate-badge">$1.99 (Std) / $2.19 (Lite)</span></label>
+        <div class="slider-row">
+          <input type="range" id="check-slider" min="0" max="500" value="5">
+          <input type="number" class="num-input" id="check-input" min="0" value="5">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Pricing toggle -->
+  <div class="custom-pricing-bar">
+    <button class="custom-pricing-toggle" id="cp-toggle-btn" onclick="toggleCustomPricing()">
+      <span>⚙ Custom Pricing</span>
+      <span class="override-dot" id="override-dot"></span>
+    </button>
+  </div>
+
+  <!-- Custom Pricing panel (collapsed by default) -->
+  <div class="custom-pricing-panel" id="cp-panel">
+    <div class="custom-pricing-header">
+      <h3>Custom Pricing</h3>
+      <button class="cp-reset" onclick="resetCustomPricing()">Reset to defaults</button>
+    </div>
+    <div class="cp-grid">
+      <!-- Standard column -->
+      <div class="cp-col">
+        <div class="cp-col-header std">Standard</div>
+        <div class="cp-col-inner">
+          <div class="cp-field">
+            <label>Entity price <span>(overrides tiered rates)</span></label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-std-entity" min="0" step="0.01" value="35">
+              <span class="cp-mo">/entity/mo</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>Additional user price</label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-std-user" min="0" step="0.01" value="10">
+              <span class="cp-mo">/user/mo</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>ACH rate</label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-std-ach" min="0" step="0.01" value="0.59">
+              <span class="cp-mo">/payment</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>Check rate</label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-std-check" min="0" step="0.01" value="1.99">
+              <span class="cp-mo">/payment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- LITE column -->
+      <div class="cp-col">
+        <div class="cp-col-header lite">LITE</div>
+        <div class="cp-col-inner">
+          <div class="cp-field">
+            <label>Entity price</label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-lite-entity" min="0" step="0.01" value="10">
+              <span class="cp-mo">/entity/mo</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>Additional user price</label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-lite-user" min="0" step="0.01" value="10">
+              <span class="cp-mo">/user/mo</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>ACH rate <span>(first 10)</span></label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-lite-ach-low" min="0" step="0.01" value="2.19">
+              <span class="cp-mo">/payment</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>ACH rate <span>(11+)</span></label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-lite-ach-high" min="0" step="0.01" value="5.00">
+              <span class="cp-mo">/payment</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>Check rate <span>(first 10)</span></label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-lite-check-low" min="0" step="0.01" value="2.19">
+              <span class="cp-mo">/payment</span>
+            </div>
+          </div>
+          <div class="cp-field">
+            <label>Check rate <span>(11+)</span></label>
+            <div class="cp-input-row">
+              <span class="cp-dollar">$</span>
+              <input type="number" class="cp-input" id="cp-lite-check-high" min="0" step="0.01" value="5.00">
+              <span class="cp-mo">/payment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side-by-side plan comparison -->
+  <div class="comparison">
+    <div class="plan-card standard" id="standard-card">
+      <div class="plan-label">Option 1</div>
+      <div class="plan-name">Standard</div>
+      <div class="plan-total" id="std-total">$0.00</div>
+      <div class="plan-sub" id="std-sub">per month</div>
+      <div class="plan-lines">
+        <div class="plan-line"><span class="line-label">Subscription (entities)</span><span class="line-amount" id="std-sub-cost">$0.00</span></div>
+        <div class="plan-line"><span class="line-label">Client Users</span><span class="line-amount" id="std-users">$0.00</span></div>
+        <div class="plan-line"><span class="line-label">ACH</span><span class="line-amount" id="std-ach">$0.00</span></div>
+        <div class="plan-line"><span class="line-label">Checks</span><span class="line-amount" id="std-checks">$0.00</span></div>
+      </div>
+    </div>
+
+    <div class="plan-card lite" id="lite-card">
+      <div class="plan-label">Option 2</div>
+      <div class="plan-name">LITE</div>
+      <div class="plan-total" id="lite-total">$0.00</div>
+      <div class="plan-sub" id="lite-sub">per month</div>
+      <div class="plan-lines" id="lite-plan-lines">
+        <div class="plan-line"><span class="line-label">Subscription (entities)</span><span class="line-amount" id="lite-sub-cost">$0.00</span></div>
+        <div class="plan-line"><span class="line-label">Client Users</span><span class="line-amount" id="lite-users">$0.00</span></div>
+        <div id="lite-ach-rows"></div>
+        <div id="lite-check-rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="savings-banner" id="savings-banner">
+    <div>
+      <div class="savings-label" id="savings-label">Savings with Standard</div>
+      <div class="savings-amount" id="savings-amount">$0.00/mo</div>
+    </div>
+  </div>
+
+  <!-- Scenario comparison -->
+  <div class="compare-section">
+    <div class="compare-header">
+      <h3>Scenario Comparison</h3>
+      <button class="add-scenario" id="add-btn">+ Save Current Scenario</button>
+    </div>
+    <div class="scenarios" id="scenarios-container">
+      <div class="no-scenarios">Save scenarios to compare different usage mixes side by side.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // CP panel defaults
+  const CP_DEFAULTS = {
+    stdEntity: 35, stdUser: 10, stdAch: 0.59, stdCheck: 1.99,
+    liteEntity: 10, liteUser: 10, liteAchLow: 2.19, liteAchHigh: 5.00, liteCheckLow: 2.19, liteCheckHigh: 5.00
+  };
+
+  let cpPanelOpen = false;
+
+  let scenarios = [];
+  let scenarioCounter = 1;
+
+  function fmt(n) {
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function getCPValues() {
+    const g = id => parseFloat(document.getElementById(id).value) || 0;
+    return {
+      stdEntity:     g('cp-std-entity'),
+      stdUser:       g('cp-std-user'),
+      stdAch:        g('cp-std-ach'),
+      stdCheck:      g('cp-std-check'),
+      liteEntity:    g('cp-lite-entity'),
+      liteUser:      g('cp-lite-user'),
+      liteAchLow:    g('cp-lite-ach-low'),
+      liteAchHigh:   g('cp-lite-ach-high'),
+      liteCheckLow:  g('cp-lite-check-low'),
+      liteCheckHigh: g('cp-lite-check-high'),
+    };
+  }
+
+  function hasAnyOverride() {
+    const cp = getCPValues();
+    return Object.keys(CP_DEFAULTS).some(k => Math.abs(cp[k] - CP_DEFAULTS[k]) > 0.001);
+  }
+
+  function stdEntityRateEffective(entities, cpStdEntity) {
+    if (Math.abs(cpStdEntity - CP_DEFAULTS.stdEntity) > 0.001) return cpStdEntity;
+    if (entities >= 25) return 25;
+    if (entities >= 11) return 30;
+    return 35;
+  }
+
+  function litePaymentCost(qty, low, high) {
+    if (qty <= 10) return qty * low;
+    return 10 * low + (qty - 10) * high;
+  }
+
+  function getValues() {
+    return {
+      entities: parseInt(document.getElementById('entities-input').value) || 0,
+      users:    parseInt(document.getElementById('users-input').value)    || 0,
+      ach:      parseInt(document.getElementById('ach-input').value)      || 0,
+      checks:   parseInt(document.getElementById('check-input').value)   || 0,
+    };
+  }
+
+  function calcStandard(v) {
+    const cp = getCPValues();
+    const rate = stdEntityRateEffective(v.entities, cp.stdEntity);
+    const sub = 1 * rate;
+    const users = Math.max(0, v.users - 1) * cp.stdUser;
+    const ach = v.ach * cp.stdAch;
+    const checks = v.checks * cp.stdCheck;
+    return { sub, users, ach, checks, total: sub + users + ach + checks, rate };
+  }
+
+  function calcLite(v) {
+    const cp = getCPValues();
+    const sub = 1 * cp.liteEntity;
+    const users = Math.max(0, v.users - 1) * cp.liteUser;
+    const ach = litePaymentCost(v.ach, cp.liteAchLow, cp.liteAchHigh);
+    const checks = litePaymentCost(v.checks, cp.liteCheckLow, cp.liteCheckHigh);
+    return { sub, users, ach, checks, total: sub + users + ach + checks, cp };
+  }
+
+  function renderLiteTieredRows(containerId, qty, lowRate, highRate, label) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (qty === 0) {
+      const row = document.createElement('div');
+      row.className = 'plan-line';
+      row.innerHTML = '<span class="line-label">' + label + '</span><span class="line-amount">' + fmt(0) + '</span>';
+      container.appendChild(row);
+      return;
+    }
+    if (qty <= 10) {
+      const total = qty * lowRate;
+      const row = document.createElement('div');
+      row.className = 'plan-line';
+      row.innerHTML = '<span class="line-label">' + label + '</span><span class="line-amount">' + fmt(total) + '</span>';
+      container.appendChild(row);
+    } else {
+      const header = document.createElement('div');
+      header.className = 'plan-line-header';
+      header.innerHTML = '<span class="line-label">' + label + '</span>';
+      container.appendChild(header);
+      const t1Total = 10 * lowRate;
+      const t1 = document.createElement('div');
+      t1.className = 'plan-line-tier';
+      t1.innerHTML = '<span class="tier-desc">First 10 &times; ' + fmt(lowRate) + '</span><span class="tier-amount">' + fmt(t1Total) + '</span>';
+      container.appendChild(t1);
+      const extra = qty - 10;
+      const t2Total = extra * highRate;
+      const t2 = document.createElement('div');
+      t2.className = 'plan-line-tier';
+      t2.innerHTML = '<span class="tier-desc">Next ' + extra + ' &times; ' + fmt(highRate) + '</span><span class="tier-amount">' + fmt(t2Total) + '</span>';
+      container.appendChild(t2);
+    }
+  }
+
+  function toggleCustomPricing() {
+    cpPanelOpen = !cpPanelOpen;
+    document.getElementById('cp-panel').classList.toggle('open', cpPanelOpen);
+  }
+
+  function resetCustomPricing() {
+    document.getElementById('cp-std-entity').value      = CP_DEFAULTS.stdEntity;
+    document.getElementById('cp-std-user').value        = CP_DEFAULTS.stdUser;
+    document.getElementById('cp-std-ach').value         = CP_DEFAULTS.stdAch;
+    document.getElementById('cp-std-check').value       = CP_DEFAULTS.stdCheck;
+    document.getElementById('cp-lite-entity').value     = CP_DEFAULTS.liteEntity;
+    document.getElementById('cp-lite-user').value       = CP_DEFAULTS.liteUser;
+    document.getElementById('cp-lite-ach-low').value    = CP_DEFAULTS.liteAchLow;
+    document.getElementById('cp-lite-ach-high').value   = CP_DEFAULTS.liteAchHigh;
+    document.getElementById('cp-lite-check-low').value  = CP_DEFAULTS.liteCheckLow;
+    document.getElementById('cp-lite-check-high').value = CP_DEFAULTS.liteCheckHigh;
+    updateDisplay();
+  }
+
+  function updateDisplay() {
+    const v = getValues();
+    const cp = getCPValues();
+    const std = calcStandard(v);
+    const lite = calcLite(v);
+
+    // Update entity rate badge
+    const cpStdEntityChanged = Math.abs(cp.stdEntity - CP_DEFAULTS.stdEntity) > 0.001;
+    const badge = document.getElementById('entity-rate-badge');
+    if (cpStdEntityChanged) {
+      badge.textContent = '$' + cp.stdEntity.toFixed(2) + '/entity (custom)';
+      badge.style.outline = '1.5px solid #FF5A0A';
+    } else {
+      const rate = std.rate;
+      badge.textContent = rate === 35 ? '$35/entity (1–10)' : rate === 30 ? '$30/entity (11–24)' : '$25/entity (25+)';
+      badge.style.outline = '';
+    }
+    // Update ACH rate badge
+    const achBadge = document.getElementById('ach-rate-badge');
+    const achStdCustom = Math.abs(cp.stdAch - CP_DEFAULTS.stdAch) > 0.001;
+    const achLiteCustom = Math.abs(cp.liteAchLow - CP_DEFAULTS.liteAchLow) > 0.001 || Math.abs(cp.liteAchHigh - CP_DEFAULTS.liteAchHigh) > 0.001;
+    achBadge.textContent = '$' + cp.stdAch.toFixed(2) + ' (Std) / $' + cp.liteAchLow.toFixed(2) + ' (Lite)' + ((achStdCustom || achLiteCustom) ? ' ✱' : '');
+    // Update Check rate badge
+    const checkBadge = document.getElementById('check-rate-badge');
+    const checkStdCustom = Math.abs(cp.stdCheck - CP_DEFAULTS.stdCheck) > 0.001;
+    const checkLiteCustom = Math.abs(cp.liteCheckLow - CP_DEFAULTS.liteCheckLow) > 0.001 || Math.abs(cp.liteCheckHigh - CP_DEFAULTS.liteCheckHigh) > 0.001;
+    checkBadge.textContent = '$' + cp.stdCheck.toFixed(2) + ' (Std) / $' + cp.liteCheckLow.toFixed(2) + ' (Lite)' + ((checkStdCustom || checkLiteCustom) ? ' ✱' : '');
+
+    // CP input highlight when overridden
+    const cpFields = [
+      { id: 'cp-std-entity',     def: CP_DEFAULTS.stdEntity },
+      { id: 'cp-std-user',       def: CP_DEFAULTS.stdUser },
+      { id: 'cp-std-ach',        def: CP_DEFAULTS.stdAch },
+      { id: 'cp-std-check',      def: CP_DEFAULTS.stdCheck },
+      { id: 'cp-lite-entity',    def: CP_DEFAULTS.liteEntity },
+      { id: 'cp-lite-user',      def: CP_DEFAULTS.liteUser },
+      { id: 'cp-lite-ach-low',   def: CP_DEFAULTS.liteAchLow },
+      { id: 'cp-lite-ach-high',  def: CP_DEFAULTS.liteAchHigh },
+      { id: 'cp-lite-check-low', def: CP_DEFAULTS.liteCheckLow },
+      { id: 'cp-lite-check-high',def: CP_DEFAULTS.liteCheckHigh },
+    ];
+    cpFields.forEach(f => {
+      const el = document.getElementById(f.id);
+      const val = parseFloat(el.value) || 0;
+      el.classList.toggle('overridden', Math.abs(val - f.def) > 0.001);
+    });
+
+    // Toggle button state
+    const toggleBtn = document.getElementById('cp-toggle-btn');
+    toggleBtn.classList.toggle('has-overrides', hasAnyOverride());
+
+    // Standard card
+    document.getElementById('std-total').textContent = fmt(std.total);
+    document.getElementById('std-sub').textContent = '1 entity · ' + v.users + ' user' + (v.users !== 1 ? 's' : '') + ' · ' + v.ach + ' ACH · ' + v.checks + ' checks';
+    document.getElementById('std-sub-cost').textContent = fmt(std.sub);
+    document.getElementById('std-users').textContent = fmt(std.users);
+    document.getElementById('std-ach').textContent = fmt(std.ach);
+    document.getElementById('std-checks').textContent = fmt(std.checks);
+
+    // LITE card
+    document.getElementById('lite-total').textContent = fmt(lite.total);
+    document.getElementById('lite-sub').textContent = '1 entity · ' + v.users + ' user' + (v.users !== 1 ? 's' : '') + ' · ' + v.ach + ' ACH · ' + v.checks + ' checks';
+    document.getElementById('lite-sub-cost').textContent = fmt(lite.sub);
+    document.getElementById('lite-users').textContent = fmt(lite.users);
+
+    renderLiteTieredRows('lite-ach-rows',   v.ach,    cp.liteAchLow,   cp.liteAchHigh,   'ACH');
+    renderLiteTieredRows('lite-check-rows', v.checks, cp.liteCheckLow, cp.liteCheckHigh, 'Checks');
+
+    // Savings banner
+    const diff = lite.total - std.total;
+    const banner = document.getElementById('savings-banner');
+    const savingsLabel = document.getElementById('savings-label');
+    const savingsAmt = document.getElementById('savings-amount');
+    if (Math.abs(diff) < 0.005) {
+      banner.className = 'savings-banner tied';
+      savingsLabel.textContent = 'Same price — either plan works';
+      savingsAmt.textContent = '$0.00/mo';
+    } else if (diff > 0) {
+      banner.className = 'savings-banner standard-wins';
+      savingsLabel.textContent = 'Standard saves';
+      savingsAmt.textContent = fmt(diff) + '/mo vs LITE';
+    } else {
+      banner.className = 'savings-banner lite-wins';
+      savingsLabel.textContent = 'LITE saves';
+      savingsAmt.textContent = fmt(-diff) + '/mo vs Standard';
+    }
+
+    renderScenarios();
+  }
+
+  function renderScenarios() {
+    const container = document.getElementById('scenarios-container');
+    container.innerHTML = '';
+    if (scenarios.length === 0) {
+      container.innerHTML = '<div class="no-scenarios">Save scenarios to compare different usage mixes side by side.</div>';
+      return;
+    }
+    scenarios.forEach((s, i) => {
+      const winner = s.std < s.lite ? 'Standard' : s.lite < s.std ? 'LITE' : 'Tied';
+      const badgeClass = winner === 'Standard' ? 'badge-standard' : winner === 'LITE' ? 'badge-lite' : 'badge-tied';
+      const bd = winner === 'Standard' ? s.stdBreakdown : winner === 'LITE' ? s.liteBreakdown : null;
+      const breakdownHtml = bd ? (
+        '<div class="sc-breakdown">' +
+        '<div class="sc-breakdown-row"><span class="sc-bl">Subscription</span><span class="sc-ba">' + fmt(bd.sub) + '</span></div>' +
+        '<div class="sc-breakdown-row"><span class="sc-bl">Client Users</span><span class="sc-ba">' + fmt(bd.users) + '</span></div>' +
+        '<div class="sc-breakdown-row"><span class="sc-bl">ACH</span><span class="sc-ba">' + fmt(bd.ach) + '</span></div>' +
+        '<div class="sc-breakdown-row"><span class="sc-bl">Checks</span><span class="sc-ba">' + fmt(bd.checks) + '</span></div>' +
+        '</div>'
+      ) : '';
+      const card = document.createElement('div');
+      card.className = 'scenario-card';
+      card.innerHTML =
+        '<button class="sc-remove" title="Remove" onclick="removeScenario(' + i + ')">×</button>' +
+        '<div class="sc-label">Scenario ' + s.num + '</div>' +
+        '<div class="sc-row"><span class="sc-plan-label">Standard</span><span class="sc-plan-amount">' + fmt(s.std) + '</span></div>' +
+        '<div class="sc-row"><span class="sc-plan-label">LITE</span><span class="sc-plan-amount">' + fmt(s.lite) + '</span></div>' +
+        '<span class="sc-winner-badge ' + badgeClass + '">' + winner + ' wins</span>' +
+        breakdownHtml +
+        '<div class="sc-detail">1 entity · ' + s.users + ' user' + (s.users !== 1 ? 's' : '') + ' · ' + s.ach + ' ACH · ' + s.checks + ' checks</div>';
+      container.appendChild(card);
+    });
+  }
+
+  window.removeScenario = function(idx) {
+    scenarios.splice(idx, 1);
+    renderScenarios();
+  };
+
+  document.getElementById('add-btn').addEventListener('click', () => {
+    const v = getValues();
+    const std = calcStandard(v);
+    const lite = calcLite(v);
+    scenarios.push({
+      num: scenarioCounter++,
+      entities: v.entities, users: v.users, ach: v.ach, checks: v.checks,
+      std: std.total, lite: lite.total,
+      stdBreakdown: { sub: std.sub, users: std.users, ach: std.ach, checks: std.checks },
+      liteBreakdown: { sub: lite.sub, users: lite.users, ach: lite.ach, checks: lite.checks },
+    });
+    renderScenarios();
+  });
+
+  // Wire up CP inputs to live-update
+  ['cp-std-entity','cp-std-user','cp-std-ach','cp-std-check','cp-lite-entity','cp-lite-user','cp-lite-ach-low','cp-lite-ach-high','cp-lite-check-low','cp-lite-check-high'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateDisplay);
+  });
+
+  function syncSliderInput(sliderId, inputId, defaultMax) {
+    const slider = document.getElementById(sliderId);
+    const input  = document.getElementById(inputId);
+    slider.addEventListener('input', () => { input.value = slider.value; updateDisplay(); });
+    input.addEventListener('input', () => {
+      let val = parseInt(input.value) || 0;
+      if (val < 0) val = 0;
+      slider.max = Math.max(defaultMax, val);
+      slider.value = val;
+      input.value = val;
+      updateDisplay();
+    });
+  }
+
+  syncSliderInput('entities-slider', 'entities-input', 500);
+  syncSliderInput('users-slider',    'users-input',    50);
+  syncSliderInput('ach-slider',      'ach-input',      500);
+  syncSliderInput('check-slider',    'check-input',    500);
+
+  updateDisplay();
+</script>
+</body>
+</html>
