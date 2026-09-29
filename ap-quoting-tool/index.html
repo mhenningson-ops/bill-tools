@@ -132,6 +132,7 @@
   .cp-col-header.std { color: #FF5A0A; }
   .cp-col-header.lite { color: #0C064F; }
   .cp-full { grid-column: 1 / -1; }
+  .cp-subnote { font-size: 11px; color: #aaa; margin-top: 2px; }
 
   .cp-field { }
   .cp-field label {
@@ -298,15 +299,18 @@
   <!-- Custom Pricing panel (collapsed by default) -->
   <div class="custom-pricing-panel" id="cp-panel">
     <div class="custom-pricing-header">
-      <h3>Custom Pricing</h3>
+      <div>
+        <h3>Custom Pricing</h3>
+        <p class="cp-subnote">Standard entity price overrides tiered rates when set</p>
+      </div>
       <button class="cp-reset" onclick="resetCustomPricing()">Reset to defaults</button>
     </div>
     <div class="cp-grid">
       <!-- Standard column -->
       <div class="cp-col">
         <div class="cp-col-header std">Standard</div>
-        <div class="cp-field cp-full">
-          <label>Entity price <span>(overrides tiered rates)</span></label>
+        <div class="cp-field">
+          <label>Entity price</label>
           <div class="cp-input-row">
             <span class="cp-dollar">$</span>
             <input type="number" class="cp-input" id="cp-std-entity" min="0" step="0.01" value="35">
@@ -348,7 +352,7 @@
       <!-- LITE column -->
       <div class="cp-col">
         <div class="cp-col-header lite">LITE</div>
-        <div class="cp-field cp-full">
+        <div class="cp-field">
           <label>Entity price</label>
           <div class="cp-input-row">
             <span class="cp-dollar">$</span>
