@@ -202,6 +202,8 @@
 
   .scenario-card { background: #f7f7f7; border-radius: 10px; padding: 14px; position: relative; }
   .sc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 6px; }
+  .sc-name-input { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; border: none; background: transparent; outline: none; width: 100%; padding: 0; margin-bottom: 6px; cursor: text; }
+  .sc-name-input:focus { color: #FF5A0A; border-bottom: 1px solid #FF5A0A; }
   .sc-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
   .sc-plan-label { font-size: 11px; color: #888; }
   .sc-plan-amount { font-size: 14px; font-weight: 800; color: #1a1a1a; }
@@ -669,7 +671,7 @@
       card.className = 'scenario-card';
       card.innerHTML =
         '<button class="sc-remove" title="Remove" onclick="removeScenario(' + i + ')">×</button>' +
-        '<div class="sc-label">Scenario ' + s.num + '</div>' +
+        '<input class="sc-name-input" value="' + s.name.replace(/"/g, '&quot;') + '" title="Click to rename" onchange="renameScenario(' + i + ', this.value)" />' +
         '<div class="sc-row"><span class="sc-plan-label">Standard</span><span class="sc-plan-amount">' + fmt(s.std) + '</span></div>' +
         '<div class="sc-row"><span class="sc-plan-label">LITE</span><span class="sc-plan-amount">' + fmt(s.lite) + '</span></div>' +
         '<span class="sc-winner-badge ' + badgeClass + '">' + winner + ' wins</span>' +
@@ -684,12 +686,18 @@
     renderScenarios();
   };
 
+  window.renameScenario = function(idx, name) {
+    scenarios[idx].name = name.trim() || ('Scenario ' + scenarios[idx].num);
+  };
+
   document.getElementById('add-btn').addEventListener('click', () => {
     const v = getValues();
     const std = calcStandard(v);
     const lite = calcLite(v);
+    const num = scenarioCounter++;
     scenarios.push({
-      num: scenarioCounter++,
+      num: num,
+      name: 'Scenario ' + num,
       entities: v.entities, users: v.users, ach: v.ach, checks: v.checks,
       std: std.total, lite: lite.total,
       stdBreakdown: { sub: std.sub, users: std.users, ach: std.ach, checks: std.checks },
