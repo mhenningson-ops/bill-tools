@@ -202,8 +202,9 @@
 
   .scenario-card { background: #f7f7f7; border-radius: 10px; padding: 14px; position: relative; }
   .sc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 6px; }
-  .sc-name-input { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; border: none; background: transparent; outline: none; width: 100%; padding: 0; margin-bottom: 6px; cursor: text; }
+  .sc-name-input { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; border: none; background: transparent; outline: none; width: 100%; padding: 0; margin-bottom: 2px; cursor: text; }
   .sc-name-input:focus { color: #FF5A0A; border-bottom: 1px solid #FF5A0A; }
+  .sc-rename-hint { font-size: 10px; color: #ccc; margin-bottom: 6px; }
   .sc-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
   .sc-plan-label { font-size: 11px; color: #888; }
   .sc-plan-amount { font-size: 14px; font-weight: 800; color: #1a1a1a; }
@@ -669,9 +670,11 @@
       ) : '';
       const card = document.createElement('div');
       card.className = 'scenario-card';
+      const hintStyle = s.renamed ? 'display:none' : '';
       card.innerHTML =
         '<button class="sc-remove" title="Remove" onclick="removeScenario(' + i + ')">×</button>' +
-        '<input class="sc-name-input" value="' + s.name.replace(/"/g, '&quot;') + '" title="Click to rename" onchange="renameScenario(' + i + ', this.value)" />' +
+        '<input class="sc-name-input" value="' + s.name.replace(/"/g, '&quot;') + '" onfocus="hideRenameHint(this)" onchange="renameScenario(' + i + ', this.value)" />' +
+        '<div class="sc-rename-hint" style="' + hintStyle + '">Click to rename</div>' +
         '<div class="sc-row"><span class="sc-plan-label">Standard</span><span class="sc-plan-amount">' + fmt(s.std) + '</span></div>' +
         '<div class="sc-row"><span class="sc-plan-label">LITE</span><span class="sc-plan-amount">' + fmt(s.lite) + '</span></div>' +
         '<span class="sc-winner-badge ' + badgeClass + '">' + winner + ' wins</span>' +
@@ -688,6 +691,12 @@
 
   window.renameScenario = function(idx, name) {
     scenarios[idx].name = name.trim() || ('Scenario ' + scenarios[idx].num);
+    scenarios[idx].renamed = true;
+  };
+
+  window.hideRenameHint = function(input) {
+    const hint = input.nextElementSibling;
+    if (hint && hint.classList.contains('sc-rename-hint')) hint.style.display = 'none';
   };
 
   document.getElementById('add-btn').addEventListener('click', () => {
@@ -698,6 +707,7 @@
     scenarios.push({
       num: num,
       name: 'Scenario ' + num,
+      renamed: false,
       entities: v.entities, users: v.users, ach: v.ach, checks: v.checks,
       std: std.total, lite: lite.total,
       stdBreakdown: { sub: std.sub, users: std.users, ach: std.ach, checks: std.checks },
