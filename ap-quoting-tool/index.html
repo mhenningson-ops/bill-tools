@@ -202,6 +202,15 @@
 
   .scenario-card { background: #f7f7f7; border-radius: 10px; padding: 14px; position: relative; }
   .sc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 6px; }
+  .cp-toggle-row { display: flex; align-items: center; justify-content: space-between; grid-column: 1 / -1; padding: 6px 0 2px; }
+  .cp-toggle-row label { font-size: 12px; color: #555; }
+  .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #ddd; border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+  .toggle-slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+  .toggle-switch input:checked + .toggle-slider { background: #FF5A0A; }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+
   .sc-name-input { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; border: none; background: transparent; outline: none; width: 100%; padding: 0; margin-bottom: 2px; cursor: text; }
   .sc-name-input:focus { color: #FF5A0A; border-bottom: 1px solid #FF5A0A; }
   .sc-rename-hint { font-size: 10px; color: #ccc; margin-bottom: 6px; }
@@ -305,6 +314,13 @@
               <span class="cp-mo">/user/mo</span>
             </div>
           </div>
+          <div class="cp-toggle-row">
+            <label for="cp-std-free-user">First user free</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cp-std-free-user" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
           <div class="cp-field">
             <label>ACH rate</label>
             <div class="cp-input-row">
@@ -342,6 +358,13 @@
               <input type="number" class="cp-input" id="cp-lite-user" min="0" step="0.01" value="10">
               <span class="cp-mo">/user/mo</span>
             </div>
+          </div>
+          <div class="cp-toggle-row">
+            <label for="cp-lite-free-user">First user free</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cp-lite-free-user" checked>
+              <span class="toggle-slider"></span>
+            </label>
           </div>
           <div class="cp-field">
             <label>ACH rate <span>(first 10)</span></label>
@@ -446,23 +469,28 @@
 
   function getCPValues() {
     const g = id => parseFloat(document.getElementById(id).value) || 0;
+    const chk = id => document.getElementById(id).checked;
     return {
-      stdEntity:     g('cp-std-entity'),
-      stdUser:       g('cp-std-user'),
-      stdAch:        g('cp-std-ach'),
-      stdCheck:      g('cp-std-check'),
-      liteEntity:    g('cp-lite-entity'),
-      liteUser:      g('cp-lite-user'),
-      liteAchLow:    g('cp-lite-ach-low'),
-      liteAchHigh:   g('cp-lite-ach-high'),
-      liteCheckLow:  g('cp-lite-check-low'),
-      liteCheckHigh: g('cp-lite-check-high'),
+      stdEntity:       g('cp-std-entity'),
+      stdUser:         g('cp-std-user'),
+      stdAch:          g('cp-std-ach'),
+      stdCheck:        g('cp-std-check'),
+      stdFreeUser:     chk('cp-std-free-user'),
+      liteEntity:      g('cp-lite-entity'),
+      liteUser:        g('cp-lite-user'),
+      liteAchLow:      g('cp-lite-ach-low'),
+      liteAchHigh:     g('cp-lite-ach-high'),
+      liteCheckLow:    g('cp-lite-check-low'),
+      liteCheckHigh:   g('cp-lite-check-high'),
+      liteFreeUser:    chk('cp-lite-free-user'),
     };
   }
 
   function hasAnyOverride() {
     const cp = getCPValues();
-    return Object.keys(CP_DEFAULTS).some(k => Math.abs(cp[k] - CP_DEFAULTS[k]) > 0.001);
+    const numericOverride = Object.keys(CP_DEFAULTS).some(k => Math.abs(cp[k] - CP_DEFAULTS[k]) > 0.001);
+    const toggleOverride = !cp.stdFreeUser || !cp.liteFreeUser;
+    return numericOverride || toggleOverride;
   }
 
   function stdEntityRateEffective(entities, cpStdEntity) {
@@ -490,7 +518,8 @@
     const cp = getCPValues();
     const rate = stdEntityRateEffective(v.entities, cp.stdEntity);
     const sub = 1 * rate;
-    const users = Math.max(0, v.users - 1) * cp.stdUser;
+    const freeUsers = cp.stdFreeUser ? 1 : 0;
+    const users = Math.max(0, v.users - freeUsers) * cp.stdUser;
     const ach = v.ach * cp.stdAch;
     const checks = v.checks * cp.stdCheck;
     return { sub, users, ach, checks, total: sub + users + ach + checks, rate };
@@ -499,7 +528,8 @@
   function calcLite(v) {
     const cp = getCPValues();
     const sub = 1 * cp.liteEntity;
-    const users = Math.max(0, v.users - 1) * cp.liteUser;
+    const freeUsers = cp.liteFreeUser ? 1 : 0;
+    const users = Math.max(0, v.users - freeUsers) * cp.liteUser;
     const ach = litePaymentCost(v.ach, cp.liteAchLow, cp.liteAchHigh);
     const checks = litePaymentCost(v.checks, cp.liteCheckLow, cp.liteCheckHigh);
     return { sub, users, ach, checks, total: sub + users + ach + checks, cp };
@@ -556,6 +586,8 @@
     document.getElementById('cp-lite-ach-high').value   = CP_DEFAULTS.liteAchHigh;
     document.getElementById('cp-lite-check-low').value  = CP_DEFAULTS.liteCheckLow;
     document.getElementById('cp-lite-check-high').value = CP_DEFAULTS.liteCheckHigh;
+    document.getElementById('cp-std-free-user').checked  = true;
+    document.getElementById('cp-lite-free-user').checked = true;
     updateDisplay();
   }
 
@@ -719,6 +751,9 @@
   // Wire up CP inputs to live-update
   ['cp-std-entity','cp-std-user','cp-std-ach','cp-std-check','cp-lite-entity','cp-lite-user','cp-lite-ach-low','cp-lite-ach-high','cp-lite-check-low','cp-lite-check-high'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateDisplay);
+  });
+  ['cp-std-free-user','cp-lite-free-user'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateDisplay);
   });
 
   function syncSliderInput(sliderId, inputId, defaultMax) {
