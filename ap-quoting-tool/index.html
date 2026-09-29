@@ -108,9 +108,15 @@
 
   .cp-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 14px 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 32px;
+  }
+  .cp-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 12px;
     align-items: start;
+    align-content: start;
   }
   .cp-col-header {
     font-size: 11px;
@@ -120,11 +126,12 @@
     color: #aaa;
     padding-bottom: 10px;
     border-bottom: 1.5px solid #f0f0f0;
-    grid-column: span 2;
+    grid-column: 1 / -1;
+    margin-bottom: 2px;
   }
   .cp-col-header.std { color: #FF5A0A; }
   .cp-col-header.lite { color: #0C064F; }
-  .cp-divider { grid-column: 1 / -1; border: none; border-top: 1.5px solid #f0f0f0; margin: 2px 0; }
+  .cp-full { grid-column: 1 / -1; }
 
   .cp-field { }
   .cp-field label {
@@ -202,7 +209,7 @@
 
   .scenario-card { background: #f7f7f7; border-radius: 10px; padding: 14px; position: relative; }
   .sc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 6px; }
-  .cp-toggle-row { display: flex; align-items: center; gap: 10px; grid-column: span 2; padding: 2px 0; }
+  .cp-toggle-row { display: flex; align-items: center; gap: 10px; grid-column: 1 / -1; padding: 2px 0; }
   .cp-toggle-row label { font-size: 12px; color: #555; }
   .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -229,14 +236,8 @@
   .sc-remove { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer; color: #ccc; line-height: 1; padding: 0; }
   .sc-remove:hover { color: #888; }
 
-  @media (max-width: 700px) {
-    .cp-grid { grid-template-columns: 1fr 1fr; }
-    .cp-col-header { grid-column: span 1; }
-    .cp-mo { display: none; }
-  }
   @media (max-width: 580px) {
-    .inputs-grid, .comparison { grid-template-columns: 1fr; }
-    .cp-grid { grid-template-columns: 1fr 1fr; }
+    .inputs-grid, .comparison, .cp-grid { grid-template-columns: 1fr; }
     .cp-mo { display: none; }
   }
 </style>
@@ -301,113 +302,106 @@
       <button class="cp-reset" onclick="resetCustomPricing()">Reset to defaults</button>
     </div>
     <div class="cp-grid">
-      <!-- Headers -->
-      <div class="cp-col-header std">Standard</div>
-      <div class="cp-col-header lite">LITE</div>
-
-      <!-- Row 1: Entity price -->
-      <div class="cp-field">
-        <label>Entity price <span>(overrides tiered rates)</span></label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-std-entity" min="0" step="0.01" value="35">
-          <span class="cp-mo">/entity/mo</span>
+      <!-- Standard column -->
+      <div class="cp-col">
+        <div class="cp-col-header std">Standard</div>
+        <div class="cp-field cp-full">
+          <label>Entity price <span>(overrides tiered rates)</span></label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-std-entity" min="0" step="0.01" value="35">
+            <span class="cp-mo">/entity/mo</span>
+          </div>
+        </div>
+        <div class="cp-field">
+          <label>Additional user price</label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-std-user" min="0" step="0.01" value="10">
+            <span class="cp-mo">/user/mo</span>
+          </div>
+        </div>
+        <div class="cp-toggle-row">
+          <label for="cp-std-free-user">First user free</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cp-std-free-user" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="cp-field">
+          <label>ACH rate</label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-std-ach" min="0" step="0.01" value="0.59">
+            <span class="cp-mo">/payment</span>
+          </div>
+        </div>
+        <div class="cp-field">
+          <label>Check rate</label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-std-check" min="0" step="0.01" value="1.99">
+            <span class="cp-mo">/payment</span>
+          </div>
         </div>
       </div>
-      <div class="cp-field"><!-- std col 2 empty --></div>
-      <div class="cp-field">
-        <label>Entity price</label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-lite-entity" min="0" step="0.01" value="10">
-          <span class="cp-mo">/entity/mo</span>
+      <!-- LITE column -->
+      <div class="cp-col">
+        <div class="cp-col-header lite">LITE</div>
+        <div class="cp-field cp-full">
+          <label>Entity price</label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-lite-entity" min="0" step="0.01" value="10">
+            <span class="cp-mo">/entity/mo</span>
+          </div>
         </div>
-      </div>
-      <div class="cp-field"><!-- lite col 2 empty --></div>
-
-      <!-- Row 2: Additional user price + First user free toggle -->
-      <div class="cp-field">
-        <label>Additional user price</label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-std-user" min="0" step="0.01" value="10">
-          <span class="cp-mo">/user/mo</span>
+        <div class="cp-field">
+          <label>Additional user price</label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-lite-user" min="0" step="0.01" value="10">
+            <span class="cp-mo">/user/mo</span>
+          </div>
         </div>
-      </div>
-      <div class="cp-toggle-row">
-        <label for="cp-std-free-user">First user free</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="cp-std-free-user" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="cp-field">
-        <label>Additional user price</label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-lite-user" min="0" step="0.01" value="10">
-          <span class="cp-mo">/user/mo</span>
+        <div class="cp-toggle-row">
+          <label for="cp-lite-free-user">First user free</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cp-lite-free-user" checked>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-      </div>
-      <div class="cp-toggle-row">
-        <label for="cp-lite-free-user">First user free</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="cp-lite-free-user" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-
-      <!-- Row 3: ACH -->
-      <div class="cp-field">
-        <label>ACH rate</label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-std-ach" min="0" step="0.01" value="0.59">
-          <span class="cp-mo">/payment</span>
+        <div class="cp-field">
+          <label>ACH rate <span>(first 10)</span></label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-lite-ach-low" min="0" step="0.01" value="2.19">
+            <span class="cp-mo">/payment</span>
+          </div>
         </div>
-      </div>
-      <div class="cp-field"><!-- std col 2 empty --></div>
-      <div class="cp-field">
-        <label>ACH rate <span>(first 10)</span></label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-lite-ach-low" min="0" step="0.01" value="2.19">
-          <span class="cp-mo">/payment</span>
+        <div class="cp-field">
+          <label>ACH rate <span>(11+)</span></label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-lite-ach-high" min="0" step="0.01" value="5.00">
+            <span class="cp-mo">/payment</span>
+          </div>
         </div>
-      </div>
-      <div class="cp-field">
-        <label>ACH rate <span>(11+)</span></label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-lite-ach-high" min="0" step="0.01" value="5.00">
-          <span class="cp-mo">/payment</span>
+        <div class="cp-field">
+          <label>Check rate <span>(first 10)</span></label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-lite-check-low" min="0" step="0.01" value="2.19">
+            <span class="cp-mo">/payment</span>
+          </div>
         </div>
-      </div>
-
-      <!-- Row 4: Check -->
-      <div class="cp-field">
-        <label>Check rate</label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-std-check" min="0" step="0.01" value="1.99">
-          <span class="cp-mo">/payment</span>
-        </div>
-      </div>
-      <div class="cp-field"><!-- std col 2 empty --></div>
-      <div class="cp-field">
-        <label>Check rate <span>(first 10)</span></label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-lite-check-low" min="0" step="0.01" value="2.19">
-          <span class="cp-mo">/payment</span>
-        </div>
-      </div>
-      <div class="cp-field">
-        <label>Check rate <span>(11+)</span></label>
-        <div class="cp-input-row">
-          <span class="cp-dollar">$</span>
-          <input type="number" class="cp-input" id="cp-lite-check-high" min="0" step="0.01" value="5.00">
-          <span class="cp-mo">/payment</span>
+        <div class="cp-field">
+          <label>Check rate <span>(11+)</span></label>
+          <div class="cp-input-row">
+            <span class="cp-dollar">$</span>
+            <input type="number" class="cp-input" id="cp-lite-check-high" min="0" step="0.01" value="5.00">
+            <span class="cp-mo">/payment</span>
+          </div>
         </div>
       </div>
     </div>
