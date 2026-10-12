@@ -260,6 +260,15 @@
   .pp-winner-row.lite { background: #ECEBFA; color: #0C064F; }
   .pp-winner-row.tied { background: #f5f5f5; color: #888; }
   .pp-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e8e8e8; font-size: 11px; color: #bbb; text-align: center; }
+  .pp-rate-table { width: 100%; border-collapse: collapse; margin-bottom: 36px; font-size: 13px; }
+  .pp-rate-table th { text-align: left; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; padding: 8px 12px; border-bottom: 2px solid #e8e8e8; }
+  .pp-rate-table th.std-col { color: #FF5A0A; }
+  .pp-rate-table th.lite-col { color: #0C064F; }
+  .pp-rate-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #555; vertical-align: top; }
+  .pp-rate-table td:first-child { font-weight: 600; color: #1a1a1a; }
+  .pp-rate-table td.rate-val { font-weight: 700; color: #1a1a1a; }
+  .pp-rate-table tr:last-child td { border-bottom: none; }
+  .pp-rate-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #999; margin-bottom: 10px; margin-top: 28px; }
 
   .scenarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   .no-scenarios { color: #bbb; font-size: 13px; padding: 4px 0; }
@@ -906,6 +915,42 @@
   function buildAndPrint(name, email, phone, firm) {
     const proposal = document.getElementById('print-proposal');
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const cp = getCPValues();
+
+    const fmtRate = v => '$' + v.toFixed(2);
+    const rateTableHtml = `
+      <div class="pp-rate-section-label">Rates Used</div>
+      <table class="pp-rate-table">
+        <thead>
+          <tr>
+            <th>Rate</th>
+            <th class="std-col">Standard</th>
+            <th class="lite-col">LITE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Entity (subscription)</td>
+            <td class="rate-val">${fmtRate(cp.stdEntity)}/entity/mo</td>
+            <td class="rate-val">${fmtRate(cp.liteEntity)}/entity/mo</td>
+          </tr>
+          <tr>
+            <td>Additional user</td>
+            <td class="rate-val">${cp.stdFreeUser ? 'First free, then ' : ''}${fmtRate(cp.stdUser)}/user/mo</td>
+            <td class="rate-val">${cp.liteFreeUser ? 'First free, then ' : ''}${fmtRate(cp.liteUser)}/user/mo</td>
+          </tr>
+          <tr>
+            <td>ACH payment</td>
+            <td class="rate-val">${fmtRate(cp.stdAch)}/payment</td>
+            <td class="rate-val">First 10: ${fmtRate(cp.liteAchLow)}, then ${fmtRate(cp.liteAchHigh)}/payment</td>
+          </tr>
+          <tr>
+            <td>Check payment</td>
+            <td class="rate-val">${fmtRate(cp.stdCheck)}/payment</td>
+            <td class="rate-val">First 10: ${fmtRate(cp.liteCheckLow)}, then ${fmtRate(cp.liteCheckHigh)}/payment</td>
+          </tr>
+        </tbody>
+      </table>`;
 
     let scenarioHtml = '';
     scenarios.forEach(s => {
@@ -954,6 +999,7 @@
       </div>
       <div class="pp-title">AP Pricing Proposal${firm ? ' for ' + firm : ''}</div>
       <div class="pp-subtitle">Prepared ${today} · Standard vs LITE comparison</div>
+      ${rateTableHtml}
       ${scenarioHtml}
       <div class="pp-footer">Prepared by ${name} · BILL · bill.com</div>
     `;
